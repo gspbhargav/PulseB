@@ -1,0 +1,19 @@
+# Build folders - Let Android Studio manage these!
+build/
+app/build/
+.gradle/
+gradle/
+
+# IDE files
+.idea/
+
+# Keystore and signed bundles (Security)
+*.jks
+*.keystore
+
+# Local configuration
+local.properties
+
+# Output APKs
+*.apk
+*.aab

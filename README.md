@@ -32,3 +32,7 @@ PulseB is a minimal Android app that helps you track how you spend your day usin
 ## Vision
 
 PulseB is designed to be fast, minimal, and frictionless — making time awareness effortless.
+
+## Chats used
+
+https://chatgpt.com/c/69a663be-5b14-8321-8a06-e280c023d081

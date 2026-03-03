@@ -10,14 +10,38 @@ import com.pulseb.app.data.db.AppDatabase
 import com.pulseb.app.data.repository.ActivityRepository
 import com.pulseb.app.ui.timeline.TimelineScreen
 import com.pulseb.app.ui.timeline.TimelineViewModel
+import com.pulseb.app.scheduler.AlarmScheduler
+import android.app.AlarmManager
+import android.content.Intent
+import android.provider.Settings
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            val alarmManager = getSystemService(AlarmManager::class.java)
+            if (!alarmManager.canScheduleExactAlarms()) {
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                startActivity(intent)
+            }
+        }
+
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            requestPermissions(
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                100
+            )
+        }
+
         val database = AppDatabase.getInstance(this)
         val repository = ActivityRepository(database.activityEntryDao())
+
+        val scheduler = com.pulseb.app.scheduler.AlarmScheduler(this)
+        val triggerTime = System.currentTimeMillis() + 10_000 // 10 second
+        scheduler.scheduleNextTrigger(triggerTime)
+
 
         setContent {
 
