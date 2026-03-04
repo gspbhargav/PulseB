@@ -2,4 +2,11 @@
 <resources>
 
     <style name="Theme.PulseB" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.PulseB.Popup" parent="android:Theme.Material.Light.NoActionBar">
+
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+
+    </style>
 </resources>

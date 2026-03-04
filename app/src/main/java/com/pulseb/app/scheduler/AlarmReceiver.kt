@@ -6,18 +6,17 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.pulseb.app.service.LoggingForegroundService
+import com.pulseb.app.util.LogTags
 
 class AlarmReceiver : BroadcastReceiver() {
 
-    override fun onReceive(context: Context, intent: Intent?) {
+    override fun onReceive(context: Context, intent: Intent) {
 
-        Log.d("PulseB", "Alarm triggered")
+        Log.d(LogTags.APP, "AlarmReceiver triggered")
 
-        val serviceIntent = Intent(context, LoggingForegroundService::class.java)
+        val serviceIntent =
+            Intent(context, LoggingForegroundService::class.java)
 
-        ContextCompat.startForegroundService(
-            context,
-            serviceIntent
-        )
+        ContextCompat.startForegroundService(context, serviceIntent)
     }
 }

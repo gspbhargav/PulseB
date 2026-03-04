@@ -1,81 +1,76 @@
 package com.pulseb.app.service
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.pulseb.app.R
-import android.content.pm.ServiceInfo
-import android.app.PendingIntent
+import com.pulseb.app.scheduler.AlarmScheduler
+import com.pulseb.app.ui.popup.PopupActivity
+import com.pulseb.app.util.LogTags
+import android.content.Context
+
 class LoggingForegroundService : Service() {
-
-    companion object {
-        const val CHANNEL_ID = "pulseb_logger_channel"
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-        createNotificationChannel()
-    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        val popupIntent = Intent(this, com.pulseb.app.ui.popup.PopupActivity::class.java)
+        Log.d(LogTags.APP, "Foreground service started")
 
-        val fullScreenPendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            popupIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        startForeground(1, buildNotification())
 
-        val notification =
-            NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("PulseB")
-                .setContentText("Time to log your activity")
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
-                .setFullScreenIntent(fullScreenPendingIntent, true)
-                .setAutoCancel(true)
-                .build()
-
-        if (android.os.Build.VERSION.SDK_INT >= 34) {
-            startForeground(
-                1,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            )
-        } else {
-            startForeground(1, notification)
-        }
+        runLogic()
 
         return START_NOT_STICKY
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    private fun runLogic() {
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val prefs = getSharedPreferences("pulseb", Context.MODE_PRIVATE)
 
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "PulseB Logger",
-                NotificationManager.IMPORTANCE_HIGH
-            )
+        val count = prefs.getInt("trigger_count", 0)
 
-            channel.description = "PulseB activity logger"
-            channel.enableVibration(true)
-            channel.enableLights(true)
-            channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            channel.setBypassDnd(true)
+        Log.d(LogTags.APP, "Trigger count = $count")
 
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+        if (count >= 5) {
+            Log.d(LogTags.APP, "Reached limit → stopping")
+            prefs.edit().putInt("trigger_count", 0).apply()
+
+            stopSelf()
+            return
         }
+
+        prefs.edit().putInt("trigger_count", count + 1).apply()
+
+        launchPopup()
+
+        Log.d(LogTags.APP, "Scheduling next alarm")
+
+        AlarmScheduler.schedule(this, 15)
+
+        stopSelf()
     }
+
+    private fun buildNotification() =
+        NotificationCompat.Builder(this, "pulseb")
+            .setContentTitle("PulseB running")
+            .setContentText("Tracking activity")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+    private fun launchPopup() {
+
+        Log.d(LogTags.APP, "Launching popup")
+
+        val intent = Intent(this, PopupActivity::class.java)
+
+        intent.addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+        )
+
+        startActivity(intent)
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
 }
